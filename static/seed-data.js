@@ -6,6 +6,21 @@
 
 window.SEED_EXHIBITIONS = [
   {
+    "id": "exhibition_2026_rhvac_tw",
+    "code": "2026-RHVAC-TW",
+    "name": "2026 台灣國際冷凍空調綠能科技展 (RHVAC Taiwan)",
+    "official_url": "https://taiwanindustryweek.com.tw/tw/exhibitor/refrigeration-hvac-taiwan",
+    "date_range": "2026/10/20 - 2026/10/22 (展覽現場進行中)",
+    "venue": "台北南港展覽館 2 館 (TaiNEX 2)",
+    "theme": "冷凍冷藏 ✕ 中央空調節能 ✕ 表後儲能削峰填谷 ✕ 廠房屋頂隔熱光電",
+    "status": "現場展出中",
+    "status_badge": "active",
+    "description": "台灣工業週 (TIW) 綠能冷凍指標展會！鎖定低溫冷鏈倉儲、冷凍食品加工、中央空調冰水主機與半導體潔淨室，主推進金生表後工商業儲能（契約容量壓低防超約）、屋頂隔熱光電（廠房頂樓降溫3~5°C）與微電網需量控制。",
+    "leads_count": 3,
+    "surveys_count": 1,
+    "badge_color": "emerald"
+  },
+  {
     "id": "exhibition_2026_taichung_ai",
     "code": "2026-TC-AI",
     "name": "2026 台中AI展 (Taichung AI Expo)",
@@ -116,6 +131,72 @@ window.OPPORTUNITY_STAGES = [
 ];
 
 window.SEED_LEADS = [
+  {
+    "id": "lead_rhvac_001",
+    "exhibition_id": "exhibition_2026_rhvac_tw",
+    "category": "儲能",
+    "category_raw": "低溫冷鏈儲能",
+    "seq_no": 1,
+    "company": "台灣極鮮冷鏈物流股份有限公司",
+    "title": "工程處 協理",
+    "name": "林聖翔 (Kevin Lin)",
+    "mobile": "0918-369-258",
+    "phone": "03-386-7788#510",
+    "email": "kevin.lin@freshcold.com.tw",
+    "address": "桃園市大園區遠雄航空自由貿易港區內",
+    "sales_rep": "Jane",
+    "notes": "10/21 現場訪談：\n在大園有3,500坪 -25°C 低溫冷凍庫，夏季空調冰水機滿載，每月電費逾220萬，時常面臨契約容量超約附加費。\n高度關注進金生「表後儲能 500kW/1,000kWh 削峰填谷」方案，預約下週三至廠區現場勘查評估。",
+    "tax_and_business": "統編: 53128901 | 低溫冷凍冷藏倉儲、醫藥溫控冷鏈、智慧溫控物流",
+    "stage": "需求確認",
+    "estimated_capacity": "500kW / 1MWh 儲能",
+    "priority": "高",
+    "created_at": "2026-10-21T09:30:00Z",
+    "updated_at": "2026-10-21T09:30:00Z"
+  },
+  {
+    "id": "lead_rhvac_002",
+    "exhibition_id": "exhibition_2026_rhvac_tw",
+    "category": "光電",
+    "category_raw": "工廠屋頂隔熱光電",
+    "seq_no": 2,
+    "company": "宏亞精密空調製冷設備廠",
+    "title": "廠務副總",
+    "name": "陳正德",
+    "mobile": "0932-159-874",
+    "phone": "04-2359-1122",
+    "email": "chen.jd@hongya-hvac.com.tw",
+    "address": "台中市西屯區台中工業區38路12號",
+    "sales_rep": "Vanessa",
+    "notes": "10/21 現場訪談：\n廠房頂樓夏天高溫達45°C造成頂樓空調壓縮機長時間高負荷耗電。\n想藉由進金生「屋頂太陽能光電 (約800坪)」進行隔熱降溫(預期降溫3~4°C)，並將綠電全數轉自發自用，降低廠區尖峰用電。",
+    "tax_and_business": "統編: 28456123 | 工業中央空調機組、熱泵冰水機組製造",
+    "stage": "場勘/技術評估",
+    "estimated_capacity": "320kWp 屋頂光電",
+    "priority": "高",
+    "created_at": "2026-10-21T10:15:00Z",
+    "updated_at": "2026-10-21T10:15:00Z"
+  },
+  {
+    "id": "lead_rhvac_003",
+    "exhibition_id": "exhibition_2026_rhvac_tw",
+    "category": "儲能",
+    "category_raw": "防壓降不斷電儲能",
+    "seq_no": 3,
+    "company": "海霸王冷凍水產食品事業部",
+    "title": "生管部 經理",
+    "name": "張家豪",
+    "mobile": "0922-987-654",
+    "phone": "07-821-3300",
+    "email": "chang.jh@hpw-foods.com.tw",
+    "address": "高雄市前鎮區前鎮漁港漁港南一路18號",
+    "sales_rep": "Jane",
+    "notes": "10/21 現場訪談：\n前鎮廠房急需「不斷電緊急備援儲能 (防壓降)」，避免台電瞬停造成急凍冷庫海鮮水產失溫損壞。同時評估光儲一體化。",
+    "tax_and_business": "統編: 76543210 | 水產冷凍加工、急凍冷藏儲運",
+    "stage": "初次接觸",
+    "estimated_capacity": "250kW / 500kWh 儲能",
+    "priority": "中",
+    "created_at": "2026-10-21T11:00:00Z",
+    "updated_at": "2026-10-21T11:00:00Z"
+  },
   {
     "id": "lead_001",
     "exhibition_id": "exhibition_2026_taichung_ai",
@@ -845,6 +926,22 @@ window.SEED_LEADS = [
 ];
 
 window.SEED_SURVEYS = [
+  {
+    "id": "survey_rhvac_001",
+    "exhibition_id": "exhibition_2026_rhvac_tw",
+    "name": "林聖翔",
+    "company": "台灣極鮮冷鏈物流股份有限公司",
+    "phone": "0918-369-258",
+    "email": "kevin.lin@freshcold.com.tw",
+    "energy_demand": "企業_儲能系統(表後儲能、削峰填谷)\n光電系統(自用、隔熱)",
+    "building_type": "自有廠房 (低溫冷鏈)",
+    "building_area": "1,001 坪以上",
+    "concerns": "建置成本與投資報酬率\n超約罰款與削峰填谷成效\n防火標準與場地規範(儲能方面)",
+    "submitted_at": "2026-10-21 09:35:12",
+    "duration_seconds": "48",
+    "ip": "現場 QR Code 掃描送出 (南港二館)",
+    "notes": "希望下週提供削峰填谷 ROI 試算表"
+  },
   {
     "id": "survey_001",
     "exhibition_id": "exhibition_2026_taichung_ai",
