@@ -1,0 +1,1345 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>進金生能源 6692｜展覽客戶機會管理平台 (Exhibition Client Lead CRM)</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            acmepoint: {
+              navy: '#051C2C',      // 進金生深海軍藍 (Primary Midnight Navy)
+              deep: '#002244',      // 經典深藍 (Classic Navy)
+              blue: '#005A9C',      // 亮藍 (Cobalt Blue)
+              accent: '#0072CE',    // 亮眼重點藍 (Accent)
+              light: '#EBF3FA',     // 柔和冰藍底色
+              canvas: '#F4F7FB',    // 畫布底色
+              card: '#FFFFFF',      // 卡片純白
+              border: '#E2E8F0',    // 精緻外框線
+              gold: '#D97706',      // 琥珀金
+              emerald: '#059669',   // 綠能翡翠綠
+              purple: '#7C3AED',    // 儲能科技紫
+              rose: '#E11D48'       // 警示玫瑰紅
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <!-- Vue 3 CDN -->
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  
+  <!-- QRCode.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+
+  <!-- Canvas Confetti CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+  
+  <!-- Supabase JS SDK CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
+  <!-- Supabase Client -->
+  <script src="./static/supabase-client.js"></script>
+
+  <style>
+    [v-cloak] { display: none; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #F1F5F9; }
+    ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col font-sans antialiased selection:bg-blue-600 selection:text-white">
+
+  <div id="app" v-cloak class="flex-1 flex flex-col">
+
+    <!-- ============================================================== -->
+    <!-- 頂部導航列 (Top Navigation - AcmePoint Navy)                   -->
+    <!-- ============================================================== -->
+    <header class="sticky top-0 z-40 bg-[#051C2C] text-white border-b border-[#002244] px-4 md:px-8 py-3 shadow-md">
+      <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3">
+        
+        <!-- 左側：品牌 Logo 與系統標題 -->
+        <div class="flex items-center space-x-3.5 w-full md:w-auto justify-between md:justify-start">
+          <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#005A9C] via-[#0072CE] to-sky-400 flex items-center justify-center shadow-lg shadow-blue-900/40">
+              <i data-lucide="building-2" class="w-6 h-6 text-white stroke-[2.2]"></i>
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="text-xs font-bold tracking-wider text-sky-400 uppercase">AcmePoint 6692</span>
+                <span class="text-[10px] px-2 py-0.5 rounded-full bg-blue-950 text-blue-200 border border-blue-700/50">展會 CRM 戰情</span>
+              </div>
+              <h1 class="text-base md:text-lg font-bold tracking-tight text-white flex items-center gap-2">
+                展覽客戶機會管理平台
+              </h1>
+            </div>
+          </div>
+
+          <!-- 當前展會切換器標籤 (手機版右側) -->
+          <button @click="activeTab = 'hub'" class="md:hidden px-2.5 py-1 rounded-lg bg-slate-800/80 border border-slate-700 text-xs text-sky-300 flex items-center gap-1.5">
+            <i data-lucide="calendar" class="w-3.5 h-3.5"></i>
+            <span>{{ currentExhibition.code }}</span>
+          </button>
+        </div>
+
+        <!-- 中間：功能導航 Tabs -->
+        <nav class="flex items-center gap-1 bg-[#002244]/80 p-1 rounded-xl border border-slate-700/60 text-xs overflow-x-auto max-w-full">
+          <button @click="activeTab = 'hub'" 
+                  :class="activeTab === 'hub' ? 'bg-[#005A9C] text-white shadow font-semibold' : 'text-slate-300 hover:text-white hover:bg-slate-800/60'"
+                  class="px-3 py-1.5 rounded-lg transition flex items-center gap-1.5 whitespace-nowrap">
+            <i data-lucide="layout-grid" class="w-3.5 h-3.5"></i>
+            <span>展會總覽入口</span>
+          </button>
+
+          <button @click="activeTab = 'leads'" 
+                  :class="activeTab === 'leads' ? 'bg-[#005A9C] text-white shadow font-semibold' : 'text-slate-300 hover:text-white hover:bg-slate-800/60'"
+                  class="px-3 py-1.5 rounded-lg transition flex items-center gap-1.5 whitespace-nowrap">
+            <i data-lucide="users" class="w-3.5 h-3.5"></i>
+            <span>客戶名冊檢索</span>
+            <span class="px-1.5 py-0.2 rounded-full bg-blue-900 text-blue-200 text-[10px]">{{ exhibitionLeads.length }}</span>
+          </button>
+
+          <button @click="activeTab = 'tracking'" 
+                  :class="activeTab === 'tracking' ? 'bg-[#005A9C] text-white shadow font-semibold' : 'text-slate-300 hover:text-white hover:bg-slate-800/60'"
+                  class="px-3 py-1.5 rounded-lg transition flex items-center gap-1.5 whitespace-nowrap">
+            <i data-lucide="trending-up" class="w-3.5 h-3.5"></i>
+            <span>客戶機會追蹤</span>
+            <span class="px-1.5 py-0.2 rounded-full bg-emerald-900 text-emerald-200 text-[10px]">即時下拉</span>
+          </button>
+
+          <button @click="activeTab = 'appendix'" 
+                  :class="activeTab === 'appendix' ? 'bg-[#005A9C] text-white shadow font-semibold' : 'text-slate-300 hover:text-white hover:bg-slate-800/60'"
+                  class="px-3 py-1.5 rounded-lg transition flex items-center gap-1.5 whitespace-nowrap">
+            <i data-lucide="qr-code" class="w-3.5 h-3.5"></i>
+            <span>現場問卷與 QR 碼</span>
+            <span class="px-1.5 py-0.2 rounded-full bg-purple-900 text-purple-200 text-[10px]">{{ exhibitionSurveys.length }}</span>
+          </button>
+        </nav>
+
+        <!-- 右側：動作按鈕群 -->
+        <div class="flex items-center space-x-2.5">
+          <!-- 當前展會下拉 (桌機版) -->
+          <div class="hidden lg:flex items-center gap-1.5 bg-[#002244] border border-slate-700 rounded-lg px-2.5 py-1 text-xs">
+            <i data-lucide="calendar" class="w-3.5 h-3.5 text-sky-400"></i>
+            <span class="text-slate-300 font-medium">當前展會：</span>
+            <select v-model="currentExhibitionId" @change="selectExhibition(currentExhibitionId)" 
+                    class="bg-transparent text-white font-semibold focus:outline-none cursor-pointer">
+              <option v-for="ex in exhibitions" :key="ex.id" :value="ex.id" class="bg-[#051C2C] text-white">
+                {{ ex.name }}
+              </option>
+            </select>
+          </div>
+
+          <!-- Supabase 狀態按鈕 -->
+          <button @click="showSupabaseModal = true" 
+                  class="px-2.5 py-1.5 rounded-lg border text-xs flex items-center gap-1.5 transition"
+                  :class="isSupabaseConnected ? 'bg-emerald-950/80 border-emerald-600/60 text-emerald-300 hover:bg-emerald-900/60' : 'bg-slate-800/80 border-slate-600 text-slate-300 hover:bg-slate-700'">
+            <span class="w-2 h-2 rounded-full" :class="isSupabaseConnected ? 'bg-emerald-400 animate-pulse' : 'bg-slate-400'"></span>
+            <span class="hidden sm:inline">{{ isSupabaseConnected ? 'Supabase 雲端已連線' : 'Supabase 設定' }}</span>
+          </button>
+
+          <!-- 匯出 CSV 按鈕 -->
+          <button @click="exportToCsv" 
+                  title="匯出當前展會客戶名單"
+                  class="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition">
+            <i data-lucide="download" class="w-4 h-4"></i>
+          </button>
+
+          <!-- 新增名片按鈕 -->
+          <button @click="showNewLeadModal = true" 
+                  class="px-3 py-1.5 rounded-lg bg-gradient-to-r from-[#005A9C] to-[#0072CE] hover:from-blue-600 hover:to-blue-500 text-white text-xs font-semibold shadow flex items-center gap-1.5 transition active:scale-95">
+            <i data-lucide="user-plus" class="w-3.5 h-3.5"></i>
+            <span class="hidden sm:inline">現場建檔</span>
+          </button>
+        </div>
+
+      </div>
+    </header>
+
+    <!-- ============================================================== -->
+    <!-- 主要內容區 (Main Container)                                   -->
+    <!-- ============================================================== -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 space-y-6">
+
+      <!-- ========================================================== -->
+      <!-- TAB 1: 展會入口總覽 (Exhibitions Hub - 擴充架構)            -->
+      <!-- ========================================================== -->
+      <section v-if="activeTab === 'hub'" class="space-y-6">
+        
+        <!-- 首頁橫幅 Banner -->
+        <div class="rounded-2xl bg-gradient-to-r from-[#051C2C] via-[#002244] to-[#005A9C] text-white p-6 md:p-8 shadow-lg relative overflow-hidden">
+          <div class="absolute -right-10 -bottom-10 opacity-10 pointer-events-none">
+            <i data-lucide="layers" class="w-80 h-80"></i>
+          </div>
+          <div class="relative z-10 max-w-3xl space-y-3">
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/20 text-sky-300 border border-blue-400/30 text-xs font-medium">
+              <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+              <span>進金生能源 6692 · 業務行銷戰情中心</span>
+            </div>
+            <h2 class="text-2xl md:text-3xl font-black tracking-tight text-white">
+              全方位展覽客戶機會管理與多展會擴充門戶
+            </h2>
+            <p class="text-sm md:text-base text-slate-300 leading-relaxed">
+              整合現場名片收集、行動問卷 QR Code 直錄、商機漏斗階段追蹤與 Supabase 雲端資料庫。
+              預備完整多展會擴充架構，無論是台中AI展、南港能源週、高雄自動化展，皆可一鍵切換與維護！
+            </p>
+            <div class="flex flex-wrap items-center gap-3 pt-2">
+              <button @click="activeTab = 'leads'" class="px-4 py-2 rounded-xl bg-white text-[#051C2C] hover:bg-slate-100 font-bold text-xs shadow-md flex items-center gap-2 transition active:scale-95">
+                <i data-lucide="search" class="w-4 h-4 text-[#005A9C]"></i>
+                <span>立即檢索 2026 台中AI展訪客名單 (33 家)</span>
+              </button>
+              <button @click="activeTab = 'appendix'" class="px-4 py-2 rounded-xl bg-blue-600/40 hover:bg-blue-600/60 border border-blue-400/40 text-white font-semibold text-xs flex items-center gap-2 transition active:scale-95">
+                <i data-lucide="qr-code" class="w-4 h-4 text-sky-300"></i>
+                <span>開啟現場問卷 QR Code 附錄</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 展會關鍵指標 KPI Cards -->
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3.5">
+          <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
+            <span class="text-xs text-slate-500 font-medium">累積展會數</span>
+            <div class="flex items-baseline justify-between mt-2">
+              <span class="text-2xl font-black text-slate-800">{{ exhibitions.length }}</span>
+              <span class="text-[10px] text-blue-600 font-semibold bg-blue-50 px-2 py-0.5 rounded-full">擴充中</span>
+            </div>
+          </div>
+          <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
+            <span class="text-xs text-slate-500 font-medium">名片客戶總數</span>
+            <div class="flex items-baseline justify-between mt-2">
+              <span class="text-2xl font-black text-blue-700">{{ kpis.totalLeads }}</span>
+              <span class="text-[10px] text-slate-500 font-medium">位聯絡人</span>
+            </div>
+          </div>
+          <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
+            <span class="text-xs text-slate-500 font-medium">現場問卷回收</span>
+            <div class="flex items-baseline justify-between mt-2">
+              <span class="text-2xl font-black text-purple-700">{{ kpis.totalSurveys }}</span>
+              <span class="text-[10px] text-purple-600 font-semibold bg-purple-50 px-2 py-0.5 rounded-full">實名填答</span>
+            </div>
+          </div>
+          <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
+            <span class="text-xs text-slate-500 font-medium">光電商機數</span>
+            <div class="flex items-baseline justify-between mt-2">
+              <span class="text-2xl font-black text-amber-600">{{ kpis.solarLeads }}</span>
+              <span class="text-[10px] text-amber-600 font-semibold bg-amber-50 px-2 py-0.5 rounded-full">EPC/自用</span>
+            </div>
+          </div>
+          <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
+            <span class="text-xs text-slate-500 font-medium">儲能商機數</span>
+            <div class="flex items-baseline justify-between mt-2">
+              <span class="text-2xl font-black text-emerald-600">{{ kpis.storageLeads }}</span>
+              <span class="text-[10px] text-emerald-600 font-semibold bg-emerald-50 px-2 py-0.5 rounded-full">表後/家用</span>
+            </div>
+          </div>
+          <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
+            <span class="text-xs text-slate-500 font-medium">跟進推進中</span>
+            <div class="flex items-baseline justify-between mt-2">
+              <span class="text-2xl font-black text-sky-600">{{ kpis.activeOpportunity }}</span>
+              <span class="text-[10px] text-sky-600 font-semibold bg-sky-50 px-2 py-0.5 rounded-full">高意向</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 展會卡片入口網格 (未來資料擴充核心架構) -->
+        <div class="space-y-4">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+                <i data-lucide="calendar-range" class="w-5 h-5 text-[#005A9C]"></i>
+                <span>展會資料庫與擴充入口 (Exhibitions Hub)</span>
+              </h3>
+              <p class="text-xs text-slate-500 mt-0.5">點選卡片即可快速進入該展會之客戶名冊、機會追蹤與專屬問卷附錄</p>
+            </div>
+            <button @click="showNewExhibitionModal = true" class="px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold flex items-center gap-1.5 shadow transition">
+              <i data-lucide="plus-circle" class="w-3.5 h-3.5 text-sky-400"></i>
+              <span>建立新展會</span>
+            </button>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div v-for="ex in exhibitions" :key="ex.id" 
+                 class="bg-white rounded-2xl border transition-all p-5 flex flex-col justify-between hover:shadow-md relative overflow-hidden"
+                 :class="ex.id === currentExhibitionId ? 'border-[#005A9C] ring-2 ring-blue-500/20' : 'border-slate-200 hover:border-slate-300'">
+              
+              <!-- 當前選定徽章標籤 -->
+              <div v-if="ex.id === currentExhibitionId" class="absolute top-0 right-0 bg-[#005A9C] text-white text-[10px] font-bold px-3 py-1 rounded-bl-xl shadow-sm">
+                當前瀏覽中
+              </div>
+
+              <div>
+                <div class="flex items-center gap-2 mb-2">
+                  <span class="px-2 py-0.5 rounded text-[11px] font-bold"
+                        :class="ex.status_badge === 'active' ? 'bg-blue-100 text-blue-800' : 'bg-slate-100 text-slate-700'">
+                    {{ ex.code }}
+                  </span>
+                  <span class="text-xs text-slate-500">{{ ex.date_range }}</span>
+                </div>
+                <h4 class="text-base font-bold text-slate-900 line-clamp-1 mb-1">{{ ex.name }}</h4>
+                <div class="flex items-center gap-1.5 text-xs text-slate-500 mb-3">
+                  <i data-lucide="map-pin" class="w-3.5 h-3.5 text-slate-400"></i>
+                  <span>{{ ex.venue }}</span>
+                </div>
+                <p class="text-xs text-slate-600 line-clamp-2 mb-4 leading-relaxed bg-slate-50 p-2.5 rounded-lg border border-slate-100">
+                  {{ ex.description }}
+                </p>
+              </div>
+
+              <div class="pt-3 border-t border-slate-100 flex items-center justify-between">
+                <div class="flex items-center gap-3 text-xs text-slate-600">
+                  <span class="flex items-center gap-1 font-semibold text-blue-700">
+                    <i data-lucide="users" class="w-3.5 h-3.5"></i> {{ ex.leads_count }} 名片
+                  </span>
+                  <span class="flex items-center gap-1 font-semibold text-purple-700">
+                    <i data-lucide="clipboard-check" class="w-3.5 h-3.5"></i> {{ ex.surveys_count }} 問卷
+                  </span>
+                </div>
+                
+                <button @click="selectExhibition(ex.id); activeTab = 'leads'" 
+                        class="px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1"
+                        :class="ex.id === currentExhibitionId ? 'bg-[#005A9C] text-white' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'">
+                  <span>進入管理</span>
+                  <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+                </button>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- ========================================================== -->
+      <!-- TAB 2: 客戶名冊檢索 (Client Leads & Keyword Search)         -->
+      <!-- ========================================================== -->
+      <section v-if="activeTab === 'leads'" class="space-y-4">
+        
+        <!-- 頂部搜尋與多維篩選控制列 -->
+        <div class="bg-white p-4 md:p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3.5">
+          
+          <!-- 關鍵字搜尋欄位 (核心功能 3) -->
+          <div class="relative">
+            <i data-lucide="search" class="w-5 h-5 text-slate-400 absolute left-3.5 top-3 pointer-events-none"></i>
+            <input v-model="searchQuery" 
+                   type="text" 
+                   placeholder="快速關鍵字搜尋：搜尋姓名、公司名稱、職稱、手機、市話、統編、備註關鍵字 (如：新廠、穩壓、微逆、加line、ISO)..." 
+                   class="w-full pl-11 pr-10 py-2.5 bg-slate-50 hover:bg-white focus:bg-white border border-slate-300 rounded-xl text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition shadow-inner">
+            <button v-if="searchQuery" @click="searchQuery = ''" class="absolute right-3.5 top-3 text-slate-400 hover:text-slate-600">
+              <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+          </div>
+
+          <!-- 快速篩選按鈕群 -->
+          <div class="flex flex-wrap items-center justify-between gap-3 pt-1">
+            
+            <!-- 分類標籤篩選 -->
+            <div class="flex flex-wrap items-center gap-1.5">
+              <span class="text-xs font-semibold text-slate-500 mr-1 flex items-center gap-1">
+                <i data-lucide="filter" class="w-3 h-3"></i> 分類：
+              </span>
+              <button v-for="cat in ['全部', '光電', '儲能', '參展廠商']" :key="cat"
+                      @click="filterCategory = cat"
+                      class="px-2.5 py-1 rounded-lg text-xs font-medium transition"
+                      :class="filterCategory === cat ? 'bg-[#005A9C] text-white shadow-sm' : 'bg-slate-100 hover:bg-slate-200 text-slate-600'">
+                {{ cat }}
+              </button>
+            </div>
+
+            <!-- 負責業務篩選 -->
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-semibold text-slate-500">業務擔當：</span>
+              <select v-model="filterSalesRep" class="px-2.5 py-1 rounded-lg bg-slate-100 border border-slate-200 text-xs font-medium text-slate-700 focus:outline-none focus:ring-1 focus:ring-blue-500">
+                <option v-for="rep in salesRepList" :key="rep" :value="rep">{{ rep }}</option>
+              </select>
+            </div>
+
+            <!-- 機會階段篩選 -->
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-semibold text-slate-500">機會階段：</span>
+              <select v-model="filterStage" class="px-2.5 py-1 rounded-lg bg-slate-100 border border-slate-200 text-xs font-medium text-slate-700 focus:outline-none focus:ring-1 focus:ring-blue-500">
+                <option value="全部">全部階段</option>
+                <option v-for="s in opportunityStages" :key="s.id" :value="s.name">{{ s.name }}</option>
+              </select>
+            </div>
+
+            <!-- 優先級篩選 -->
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-semibold text-slate-500">意向等級：</span>
+              <select v-model="filterPriority" class="px-2.5 py-1 rounded-lg bg-slate-100 border border-slate-200 text-xs font-medium text-slate-700 focus:outline-none focus:ring-1 focus:ring-blue-500">
+                <option value="全部">全部等級</option>
+                <option value="高">🔥 高意向</option>
+                <option value="中">⚡ 中意向</option>
+                <option value="一般">一般</option>
+              </select>
+            </div>
+
+            <!-- 視圖切換 (卡片 / 表格) -->
+            <div class="flex items-center gap-1 bg-slate-100 p-0.5 rounded-lg border border-slate-200">
+              <button @click="viewMode = 'cards'" 
+                      :class="viewMode === 'cards' ? 'bg-white shadow text-slate-800' : 'text-slate-500 hover:text-slate-800'"
+                      class="p-1.5 rounded-md transition" title="卡片網格視圖">
+                <i data-lucide="layout-grid" class="w-3.5 h-3.5"></i>
+              </button>
+              <button @click="viewMode = 'table'" 
+                      :class="viewMode === 'table' ? 'bg-white shadow text-slate-800' : 'text-slate-500 hover:text-slate-800'"
+                      class="p-1.5 rounded-md transition" title="緊湊表格視圖">
+                <i data-lucide="list" class="w-3.5 h-3.5"></i>
+              </button>
+            </div>
+
+          </div>
+
+        </div>
+
+        <!-- 搜尋結果狀態條 -->
+        <div class="flex items-center justify-between text-xs text-slate-500 px-1">
+          <div>
+            共篩選出 <span class="font-bold text-slate-800">{{ filteredLeads.length }}</span> 筆客戶資料 
+            <span v-if="searchQuery" class="text-blue-600 font-semibold">(關鍵字：「{{ searchQuery }}」)</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span>排序：</span>
+            <select v-model="sortBy" class="bg-transparent text-slate-700 font-medium focus:outline-none">
+              <option value="seq_no_asc">預設名單順序</option>
+              <option value="priority_desc">優先等級 (高→低)</option>
+              <option value="updated_desc">最後更新時間</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- 卡片網格視圖 (Cards View) -->
+        <div v-if="viewMode === 'cards'" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div v-for="lead in filteredLeads" :key="lead.id" 
+               class="bg-white rounded-2xl border border-slate-200 hover:border-blue-400 hover:shadow-md transition p-5 flex flex-col justify-between group">
+            
+            <div>
+              <!-- 頂部標籤列 -->
+              <div class="flex items-center justify-between gap-2 mb-2.5">
+                <div class="flex items-center gap-1.5">
+                  <span class="px-2 py-0.5 rounded text-[11px] font-bold"
+                        :class="lead.category === '光電' ? 'bg-amber-100 text-amber-800' : (lead.category === '儲能' ? 'bg-emerald-100 text-emerald-800' : 'bg-purple-100 text-purple-800')">
+                    {{ lead.category }}
+                  </span>
+                  <span class="text-[11px] font-mono text-slate-400">#{{ lead.seq_no }}</span>
+                </div>
+
+                <!-- 意向等級按鈕 (點選切換) -->
+                <button @click="togglePriority(lead)" title="點選切換意向等級"
+                        class="px-2 py-0.5 rounded-full text-[10px] font-bold border transition"
+                        :class="lead.priority === '高' ? 'bg-rose-50 text-rose-700 border-rose-300' : (lead.priority === '中' ? 'bg-amber-50 text-amber-700 border-amber-300' : 'bg-slate-50 text-slate-600 border-slate-200')">
+                  {{ lead.priority === '高' ? '🔥 高意向' : (lead.priority === '中' ? '⚡ 中意向' : '一般') }}
+                </button>
+              </div>
+
+              <!-- 公司名稱與聯絡人 -->
+              <h4 class="text-base font-bold text-slate-900 group-hover:text-blue-700 transition line-clamp-1 mb-1">
+                {{ lead.company }}
+              </h4>
+
+              <div class="flex items-center gap-2 text-xs text-slate-600 mb-3">
+                <span class="font-bold text-slate-800">{{ lead.name }}</span>
+                <span v-if="lead.title" class="text-slate-400">|</span>
+                <span v-if="lead.title" class="text-slate-500">{{ lead.title }}</span>
+              </div>
+
+              <!-- 聯絡方式 -->
+              <div class="space-y-1 text-xs text-slate-500 mb-3 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                <div v-if="lead.mobile" class="flex items-center gap-2">
+                  <i data-lucide="phone" class="w-3.5 h-3.5 text-slate-400"></i>
+                  <a :href="'tel:' + lead.mobile.replace(/\n.*/, '')" class="hover:text-blue-600 font-mono">{{ lead.mobile }}</a>
+                </div>
+                <div v-if="lead.email" class="flex items-center gap-2">
+                  <i data-lucide="mail" class="w-3.5 h-3.5 text-slate-400"></i>
+                  <a :href="'mailto:' + lead.email" class="hover:text-blue-600 font-mono truncate">{{ lead.email }}</a>
+                </div>
+                <div v-if="lead.address" class="flex items-start gap-2">
+                  <i data-lucide="map-pin" class="w-3.5 h-3.5 text-slate-400 mt-0.5"></i>
+                  <span class="line-clamp-1 text-slate-600">{{ lead.address }}</span>
+                </div>
+              </div>
+
+              <!-- 拜訪備註速覽 -->
+              <div v-if="lead.notes" class="text-xs text-slate-700 bg-amber-50/50 border border-amber-200/60 p-2.5 rounded-xl mb-4 leading-relaxed">
+                <div class="font-semibold text-amber-900 text-[11px] mb-0.5 flex items-center gap-1">
+                  <i data-lucide="message-square" class="w-3 h-3"></i> 現場洽談筆記：
+                </div>
+                <p class="line-clamp-2">{{ lead.notes }}</p>
+              </div>
+            </div>
+
+            <!-- 卡片底部：下拉狀態切換與動作按鈕 -->
+            <div class="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+              <div class="flex items-center gap-1.5">
+                <span class="text-[11px] text-slate-400 font-medium">業務:</span>
+                <span class="text-xs font-semibold text-slate-700 bg-slate-100 px-2 py-0.5 rounded">{{ lead.sales_rep }}</span>
+              </div>
+
+              <div class="flex items-center gap-2">
+                <!-- 下拉選單即時確認機會情況 (核心功能 5) -->
+                <select :value="lead.stage" @change="onStageChange(lead, $event.target.value)"
+                        class="text-xs font-bold py-1 px-2 rounded-lg border focus:outline-none cursor-pointer transition"
+                        :class="{
+                          'bg-slate-100 text-slate-700 border-slate-300': lead.stage === '初次接觸',
+                          'bg-blue-50 text-blue-700 border-blue-300': lead.stage === '需求確認',
+                          'bg-purple-50 text-purple-700 border-purple-300': lead.stage === '場勘/技術評估',
+                          'bg-amber-50 text-amber-700 border-amber-300': lead.stage === '方案報價',
+                          'bg-orange-50 text-orange-700 border-orange-300': lead.stage === '商務談判',
+                          'bg-emerald-50 text-emerald-700 border-emerald-300': lead.stage === '贏單簽約',
+                          'bg-rose-50 text-rose-700 border-rose-300': lead.stage === '暫緩/戰略結案'
+                        }">
+                  <option v-for="s in opportunityStages" :key="s.id" :value="s.name">{{ s.name }}</option>
+                </select>
+
+                <button @click="openLeadDetail(lead)" class="p-1 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition" title="檢視詳細資料">
+                  <i data-lucide="external-link" class="w-4 h-4"></i>
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- 緊湊表格視圖 (Table View) -->
+        <div v-if="viewMode === 'table'" class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-50 text-slate-600 font-semibold border-b border-slate-200">
+                <tr>
+                  <th class="py-3 px-3 w-12 text-center">序號</th>
+                  <th class="py-3 px-3">分類</th>
+                  <th class="py-3 px-4">公司名稱</th>
+                  <th class="py-3 px-4">聯絡人 / 職稱</th>
+                  <th class="py-3 px-4">電話 / Email</th>
+                  <th class="py-3 px-4">負責業務</th>
+                  <th class="py-3 px-4 w-40">機會情況 (即時下拉)</th>
+                  <th class="py-3 px-4">洽談重點</th>
+                  <th class="py-3 px-3 text-center">操作</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100">
+                <tr v-for="lead in filteredLeads" :key="lead.id" class="hover:bg-blue-50/40 transition">
+                  <td class="py-3 px-3 text-center font-mono text-slate-400 font-bold">{{ lead.seq_no }}</td>
+                  <td class="py-3 px-3">
+                    <span class="px-2 py-0.5 rounded text-[10px] font-bold"
+                          :class="lead.category === '光電' ? 'bg-amber-100 text-amber-800' : (lead.category === '儲能' ? 'bg-emerald-100 text-emerald-800' : 'bg-purple-100 text-purple-800')">
+                      {{ lead.category }}
+                    </span>
+                  </td>
+                  <td class="py-3 px-4">
+                    <div class="font-bold text-slate-900">{{ lead.company }}</div>
+                    <div v-if="lead.tax_and_business" class="text-[10px] text-slate-400 truncate max-w-xs">{{ lead.tax_and_business }}</div>
+                  </td>
+                  <td class="py-3 px-4">
+                    <div class="font-semibold text-slate-800">{{ lead.name }}</div>
+                    <div class="text-[11px] text-slate-500">{{ lead.title }}</div>
+                  </td>
+                  <td class="py-3 px-4 font-mono text-slate-600">
+                    <div>{{ lead.mobile || lead.phone }}</div>
+                    <div class="text-[11px] text-slate-400">{{ lead.email }}</div>
+                  </td>
+                  <td class="py-3 px-4">
+                    <span class="font-semibold text-slate-700 bg-slate-100 px-2 py-0.5 rounded">{{ lead.sales_rep }}</span>
+                  </td>
+                  <td class="py-3 px-4">
+                    <!-- 下拉選單即時確認機會情況 -->
+                    <select :value="lead.stage" @change="onStageChange(lead, $event.target.value)"
+                            class="text-xs font-bold py-1 px-2 rounded-lg border focus:outline-none cursor-pointer w-full transition"
+                            :class="{
+                              'bg-slate-100 text-slate-700 border-slate-300': lead.stage === '初次接觸',
+                              'bg-blue-50 text-blue-700 border-blue-300': lead.stage === '需求確認',
+                              'bg-purple-50 text-purple-700 border-purple-300': lead.stage === '場勘/技術評估',
+                              'bg-amber-50 text-amber-700 border-amber-300': lead.stage === '方案報價',
+                              'bg-orange-50 text-orange-700 border-orange-300': lead.stage === '商務談判',
+                              'bg-emerald-50 text-emerald-700 border-emerald-300': lead.stage === '贏單簽約',
+                              'bg-rose-50 text-rose-700 border-rose-300': lead.stage === '暫緩/戰略結案'
+                            }">
+                      <option v-for="s in opportunityStages" :key="s.id" :value="s.name">{{ s.name }}</option>
+                    </select>
+                  </td>
+                  <td class="py-3 px-4 text-slate-600 max-w-xs truncate" :title="lead.notes">
+                    {{ lead.notes }}
+                  </td>
+                  <td class="py-3 px-3 text-center">
+                    <button @click="openLeadDetail(lead)" class="px-2 py-1 bg-slate-100 hover:bg-blue-100 text-slate-600 hover:text-blue-700 rounded text-[11px] font-semibold transition">
+                      詳情
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- ========================================================== -->
+      <!-- TAB 3: 客戶機會追蹤 (Opportunity Pipeline with Dropdown)    -->
+      <!-- ========================================================== -->
+      <section v-if="activeTab === 'tracking'" class="space-y-6">
+        
+        <!-- 頂部機會漏斗看盤 Pipeline Funnel Cards -->
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+                <i data-lucide="git-commit" class="w-5 h-5 text-[#005A9C]"></i>
+                <span>商機漏斗全景看板 (Opportunity Pipeline)</span>
+              </h3>
+              <p class="text-xs text-slate-500 mt-0.5">點選下方階段可快速過濾該階段之客戶；在表格中可直接透過下拉選單即時切換進度！</p>
+            </div>
+            <span class="text-xs bg-blue-50 text-blue-700 font-semibold px-2.5 py-1 rounded-full border border-blue-200">
+              雙向雲端同步
+            </span>
+          </div>
+
+          <!-- 7 階段漏斗卡片 -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5">
+            <div v-for="s in opportunityStages" :key="s.id" 
+                 @click="filterStage = (filterStage === s.name ? '全部' : s.name)"
+                 class="p-3 rounded-xl border transition cursor-pointer flex flex-col justify-between"
+                 :class="filterStage === s.name ? 'ring-2 ring-blue-500 bg-blue-50/50 border-blue-400' : 'bg-slate-50/70 hover:bg-slate-100/70 border-slate-200'">
+              
+              <div class="flex items-center justify-between">
+                <span class="text-[11px] font-bold text-slate-600 truncate">{{ s.name }}</span>
+                <span class="text-[10px] font-semibold text-slate-400">{{ stageSummary[s.name]?.percentage || 0 }}%</span>
+              </div>
+
+              <div class="mt-2 flex items-baseline justify-between">
+                <span class="text-xl font-black"
+                      :class="s.name === '贏單簽約' ? 'text-emerald-600' : (s.name === '暫緩/戰略結案' ? 'text-rose-600' : 'text-slate-800')">
+                  {{ stageSummary[s.name]?.count || 0 }}
+                </span>
+                <span class="text-[10px] text-slate-400">家</span>
+              </div>
+
+              <!-- 進度條 -->
+              <div class="w-full bg-slate-200 h-1 rounded-full mt-2 overflow-hidden">
+                <div class="h-full rounded-full transition-all duration-500"
+                     :class="s.name === '贏單簽約' ? 'bg-emerald-500' : 'bg-[#005A9C]'"
+                     :style="{ width: (stageSummary[s.name]?.percentage || 0) + '%' }"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 專屬機會追蹤表格 (下拉選的方式確認機會情況 - 核心需求 5) -->
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden space-y-4 p-5">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <h4 class="text-base font-bold text-slate-900 flex items-center gap-2">
+              <i data-lucide="check-square" class="w-4 h-4 text-emerald-600"></i>
+              <span>即時狀態確認清單 (當前篩選：{{ filterStage === '全部' ? '全部階段' : filterStage }})</span>
+            </h4>
+            
+            <div class="flex items-center gap-2">
+              <button v-if="filterStage !== '全部'" @click="filterStage = '全部'" 
+                      class="text-xs text-blue-600 hover:underline flex items-center gap-1 font-semibold">
+                <i data-lucide="rotate-ccw" class="w-3 h-3"></i> 重置篩選
+              </button>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-50 text-slate-600 font-semibold border-b border-slate-200">
+                <tr>
+                  <th class="py-3 px-3 w-10 text-center">#</th>
+                  <th class="py-3 px-4">客戶公司</th>
+                  <th class="py-3 px-4">聯絡窗口</th>
+                  <th class="py-3 px-4">需求意向 / 洽談重點</th>
+                  <th class="py-3 px-4 w-32">負責業務</th>
+                  <th class="py-3 px-4 w-48">【核心】機會階段 (下拉確認)</th>
+                  <th class="py-3 px-3 text-center">快捷操作</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100">
+                <tr v-for="lead in filteredLeads" :key="lead.id" class="hover:bg-slate-50/80 transition">
+                  <td class="py-3.5 px-3 text-center font-mono font-bold text-slate-400">{{ lead.seq_no }}</td>
+                  <td class="py-3.5 px-4">
+                    <div class="font-bold text-slate-900 text-sm">{{ lead.company }}</div>
+                    <div class="flex items-center gap-2 mt-1">
+                      <span class="px-2 py-0.5 rounded text-[10px] font-bold"
+                            :class="lead.category === '光電' ? 'bg-amber-100 text-amber-800' : (lead.category === '儲能' ? 'bg-emerald-100 text-emerald-800' : 'bg-purple-100 text-purple-800')">
+                        {{ lead.category }}
+                      </span>
+                      <span v-if="lead.priority === '高'" class="text-[10px] text-rose-600 font-bold bg-rose-50 px-1.5 py-0.2 rounded">🔥 高優先</span>
+                    </div>
+                  </td>
+                  <td class="py-3.5 px-4">
+                    <div class="font-semibold text-slate-800">{{ lead.name }}</div>
+                    <div class="text-[11px] text-slate-500 font-mono">{{ lead.mobile || lead.phone }}</div>
+                  </td>
+                  <td class="py-3.5 px-4 text-slate-700 leading-relaxed max-w-sm">
+                    <p class="line-clamp-2">{{ lead.notes }}</p>
+                  </td>
+                  <td class="py-3.5 px-4">
+                    <!-- 業務指派下拉選單 -->
+                    <select :value="lead.sales_rep" @change="onSalesRepChange(lead, $event.target.value)"
+                            class="bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-lg px-2 py-1 text-xs font-semibold text-slate-700 focus:outline-none focus:ring-1 focus:ring-blue-500">
+                      <option value="Vanessa">Vanessa</option>
+                      <option value="Jane">Jane</option>
+                      <option value="Lucy">Lucy</option>
+                      <option value="Duck">Duck</option>
+                      <option value="待指派">待指派</option>
+                    </select>
+                  </td>
+                  <td class="py-3.5 px-4">
+                    <!-- 核心下拉選單確認機會情況 (Requirement 5) -->
+                    <div class="relative">
+                      <select :value="lead.stage" @change="onStageChange(lead, $event.target.value)"
+                              class="w-full text-xs font-bold py-1.5 px-3 rounded-xl border focus:outline-none cursor-pointer transition shadow-sm"
+                              :class="{
+                                'bg-slate-100 text-slate-700 border-slate-300': lead.stage === '初次接觸',
+                                'bg-blue-50 text-blue-700 border-blue-400': lead.stage === '需求確認',
+                                'bg-purple-50 text-purple-700 border-purple-400': lead.stage === '場勘/技術評估',
+                                'bg-amber-50 text-amber-700 border-amber-400': lead.stage === '方案報價',
+                                'bg-orange-50 text-orange-700 border-orange-400': lead.stage === '商務談判',
+                                'bg-emerald-50 text-emerald-700 border-emerald-500 ring-1 ring-emerald-400': lead.stage === '贏單簽約',
+                                'bg-rose-50 text-rose-700 border-rose-300': lead.stage === '暫緩/戰略結案'
+                              }">
+                        <option v-for="s in opportunityStages" :key="s.id" :value="s.name">
+                          {{ s.name }} ({{ s.desc }})
+                        </option>
+                      </select>
+                    </div>
+                  </td>
+                  <td class="py-3.5 px-3 text-center">
+                    <button @click="openLeadDetail(lead)" 
+                            class="p-1.5 rounded-lg bg-slate-100 hover:bg-[#005A9C] text-slate-600 hover:text-white transition"
+                            title="完整客戶檔案">
+                      <i data-lucide="file-text" class="w-4 h-4"></i>
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- ========================================================== -->
+      <!-- TAB 4: 現場問卷與 QR 碼附錄 (Appendix - 核心需求 4)         -->
+      <!-- ========================================================== -->
+      <section v-if="activeTab === 'appendix'" class="space-y-6">
+        
+        <!-- 附錄頂部卡片：QR Code 現場掃描立牌站 (Appendix QR Code Station) -->
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 md:p-8">
+          <div class="grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
+            
+            <!-- 左側 QR Code 畫布 -->
+            <div class="md:col-span-4 flex flex-col items-center justify-center p-6 bg-slate-50 rounded-2xl border border-slate-200">
+              <div class="bg-white p-3 rounded-xl shadow-md border border-slate-100">
+                <div id="qrcode-canvas" class="flex justify-center items-center w-[180px] h-[180px]"></div>
+              </div>
+              <span class="text-xs font-mono text-slate-500 mt-3 font-semibold">掃描直連現場線上問卷</span>
+              <div class="flex items-center gap-2 mt-3">
+                <button @click="copySurveyUrl" class="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold flex items-center gap-1.5 shadow transition">
+                  <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                  <span>複製問卷連結</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- 右側說明與現場互動指南 -->
+            <div class="md:col-span-8 space-y-4">
+              <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-50 text-purple-700 border border-purple-200 text-xs font-bold">
+                <i data-lucide="smartphone" class="w-3.5 h-3.5"></i>
+                <span>附錄：現場訪客 QR Code 問卷填寫專區</span>
+              </div>
+              
+              <h3 class="text-2xl font-black text-slate-900 tracking-tight">
+                【附錄】{{ currentExhibition.name }} 訪客需求調研系統
+              </h3>
+              
+              <p class="text-sm text-slate-600 leading-relaxed">
+                在展會接待現場，業務人員可直接向訪客出示左側 QR Code，訪客使用手機相機掃描後即可開啟專屬自適應行動問卷。
+                填答資料將即時寫入 Supabase 雲端資料庫，並同步自動轉為潛在商機，省去事後人工打字之時間耗損！
+              </p>
+
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+                <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs">
+                  <span class="font-bold text-slate-800 block mb-1">⚡ 30 秒極速填寫</span>
+                  <span class="text-slate-500">針對光電/儲能關鍵需求設計，行動端最佳化體驗</span>
+                </div>
+                <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs">
+                  <span class="font-bold text-slate-800 block mb-1">🔗 自動商機建檔</span>
+                  <span class="text-slate-500">提交後自動寫入 CRM 名冊，即時指派業務跟進</span>
+                </div>
+                <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs">
+                  <span class="font-bold text-slate-800 block mb-1">📊 雲端即時彙整</span>
+                  <span class="text-slate-500">後端 Supabase BaaS 永久留存，展後報告一鍵產出</span>
+                </div>
+              </div>
+
+              <div class="pt-2">
+                <button @click="showSurveyFormModal = true" class="px-4 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-xs shadow-md flex items-center gap-2 transition active:scale-95">
+                  <i data-lucide="clipboard-pen-line" class="w-4 h-4"></i>
+                  <span>立即在此開啟現場問卷表單 (模擬填答體驗)</span>
+                </button>
+              </div>
+
+            </div>
+
+          </div>
+        </div>
+
+        <!-- 現場問卷數據戰情與歷史填答清冊 (包含 Excel 中的 8 筆實名數據) -->
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-4">
+          <div class="flex items-center justify-between">
+            <div>
+              <h4 class="text-base font-bold text-slate-900 flex items-center gap-2">
+                <i data-lucide="database" class="w-4 h-4 text-purple-600"></i>
+                <span>已收集問卷數據總覽 (共 {{ exhibitionSurveys.length }} 份實名填答)</span>
+              </h4>
+              <p class="text-xs text-slate-500 mt-0.5">收錄 2026 台中AI展 現場訪客留存之詳細需求、建物坪數與在意評估重點</p>
+            </div>
+            
+            <button @click="showSurveyFormModal = true" class="px-3 py-1.5 rounded-lg bg-purple-50 hover:bg-purple-100 text-purple-700 text-xs font-bold border border-purple-200 transition flex items-center gap-1.5">
+              <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+              <span>手動錄入問卷</span>
+            </button>
+          </div>
+
+          <!-- 問卷資料表格 -->
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-50 text-slate-600 font-semibold border-b border-slate-200">
+                <tr>
+                  <th class="py-3 px-3 w-10 text-center">序</th>
+                  <th class="py-3 px-4">填答姓名</th>
+                  <th class="py-3 px-4">公司機構</th>
+                  <th class="py-3 px-4">聯絡手機/電話</th>
+                  <th class="py-3 px-4">能源需求</th>
+                  <th class="py-3 px-4">建物類型與面積</th>
+                  <th class="py-3 px-4">在意評估要點</th>
+                  <th class="py-3 px-3 text-center">轉為商機</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100">
+                <tr v-for="(survey, idx) in exhibitionSurveys" :key="survey.id" class="hover:bg-purple-50/30 transition">
+                  <td class="py-3 px-3 text-center font-mono text-slate-400 font-bold">{{ idx + 1 }}</td>
+                  <td class="py-3 px-4 font-bold text-slate-900">{{ survey.name }}</td>
+                  <td class="py-3 px-4 text-slate-800 font-medium">{{ survey.company }}</td>
+                  <td class="py-3 px-4 font-mono text-slate-600">
+                    <div>{{ survey.phone }}</div>
+                    <div class="text-[11px] text-slate-400">{{ survey.email }}</div>
+                  </td>
+                  <td class="py-3 px-4">
+                    <span class="px-2 py-0.5 rounded text-[11px] font-semibold bg-blue-50 text-blue-800 border border-blue-200">
+                      {{ survey.energy_demand }}
+                    </span>
+                  </td>
+                  <td class="py-3 px-4 text-slate-600">
+                    <div>{{ survey.building_type }}</div>
+                    <div class="font-bold text-slate-700 text-[11px]">{{ survey.building_area }}</div>
+                  </td>
+                  <td class="py-3 px-4 text-slate-600 max-w-xs leading-relaxed">
+                    {{ survey.concerns }}
+                  </td>
+                  <td class="py-3 px-3 text-center">
+                    <button @click="convertSurveyToLead(survey)" 
+                            class="px-2.5 py-1 rounded bg-slate-100 hover:bg-emerald-600 hover:text-white text-slate-700 text-[11px] font-semibold transition flex items-center gap-1 mx-auto">
+                      <i data-lucide="user-plus" class="w-3 h-3"></i>
+                      <span>轉入商機</span>
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+
+      </section>
+
+    </main>
+
+    <!-- ============================================================== -->
+    <!-- 頁尾 (Footer)                                                  -->
+    <!-- ============================================================== -->
+    <footer class="bg-white border-t border-slate-200 py-6 px-4 md:px-8 text-xs text-slate-500 mt-auto">
+      <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3">
+        <div class="flex items-center space-x-2">
+          <span class="font-bold text-slate-800">進金生能源服務股份有限公司 (6692)</span>
+          <span>·</span>
+          <span>展覽客戶機會管理平台</span>
+        </div>
+        <div class="flex items-center space-x-4">
+          <span>支援：GitHub Pages ✕ Supabase BaaS ✕ RLS 行級安全規範</span>
+          <button @click="showSupabaseModal = true" class="text-blue-600 hover:underline">雲端配置</button>
+        </div>
+      </div>
+    </footer>
+
+    <!-- ============================================================== -->
+    <!-- 模態視窗 1：客戶詳情與編輯抽屜 (Lead Detail Modal)              -->
+    <!-- ============================================================== -->
+    <div v-if="showLeadDetailModal && selectedLead" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+      <div class="bg-white w-full max-w-2xl rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[90vh]">
+        <div class="p-5 bg-[#051C2C] text-white flex items-center justify-between">
+          <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white">
+              <i data-lucide="building" class="w-4 h-4"></i>
+            </div>
+            <div>
+              <h3 class="text-base font-bold text-white">{{ selectedLead.company }}</h3>
+              <p class="text-xs text-slate-300">客戶詳細檔案與跟進歷程</p>
+            </div>
+          </div>
+          <button @click="showLeadDetailModal = false" class="text-slate-400 hover:text-white">
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </div>
+
+        <div class="p-6 overflow-y-auto space-y-4 text-xs">
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">公司名稱</label>
+              <input v-model="selectedLead.company" type="text" class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:border-blue-500">
+            </div>
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">分類類別</label>
+              <select v-model="selectedLead.category" class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:border-blue-500">
+                <option value="光電">光電</option>
+                <option value="儲能">儲能</option>
+                <option value="參展廠商">參展廠商</option>
+                <option value="其他">其他</option>
+              </select>
+            </div>
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">聯絡人姓名</label>
+              <input v-model="selectedLead.name" type="text" class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:border-blue-500">
+            </div>
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">部門 / 職稱</label>
+              <input v-model="selectedLead.title" type="text" class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:border-blue-500">
+            </div>
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">行動電話</label>
+              <input v-model="selectedLead.mobile" type="text" class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:border-blue-500">
+            </div>
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">市話 / 據點電話</label>
+              <input v-model="selectedLead.phone" type="text" class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:border-blue-500">
+            </div>
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">電子郵件 (E-mail)</label>
+              <input v-model="selectedLead.email" type="text" class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:border-blue-500">
+            </div>
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">負責業務擔當</label>
+              <select v-model="selectedLead.sales_rep" class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:border-blue-500">
+                <option value="Vanessa">Vanessa</option>
+                <option value="Jane">Jane</option>
+                <option value="Lucy">Lucy</option>
+                <option value="Duck">Duck</option>
+                <option value="待指派">待指派</option>
+              </select>
+            </div>
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">【重要】機會階段確認</label>
+              <select v-model="selectedLead.stage" class="w-full px-3 py-2 rounded-lg border font-bold text-blue-700 bg-blue-50 border-blue-300 focus:outline-none">
+                <option v-for="s in opportunityStages" :key="s.id" :value="s.name">{{ s.name }}</option>
+              </select>
+            </div>
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">意向評級</label>
+              <select v-model="selectedLead.priority" class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:outline-none">
+                <option value="高">🔥 高意向</option>
+                <option value="中">⚡ 中意向</option>
+                <option value="一般">一般</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">地址 / 據點廠房</label>
+            <input v-model="selectedLead.address" type="text" class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:border-blue-500">
+          </div>
+
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">統一編號 / 經營業務事項</label>
+            <textarea v-model="selectedLead.tax_and_business" rows="2" class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:border-blue-500"></textarea>
+          </div>
+
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">現場洽談筆記與後續跟進事項</label>
+            <textarea v-model="selectedLead.notes" rows="3" class="w-full px-3 py-2 rounded-lg border border-amber-300 bg-amber-50/50 focus:outline-none"></textarea>
+          </div>
+        </div>
+
+        <div class="p-4 bg-slate-50 border-t border-slate-200 flex justify-end gap-2">
+          <button @click="showLeadDetailModal = false" class="px-4 py-2 rounded-lg bg-white border border-slate-300 text-slate-700 hover:bg-slate-100">取消</button>
+          <button @click="saveLeadDetail" class="px-4 py-2 rounded-lg bg-[#005A9C] hover:bg-blue-700 text-white font-bold">儲存更新</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- 模態視窗 2：手動新增客戶名片 (New Lead Modal)                    -->
+    <!-- ============================================================== -->
+    <div v-if="showNewLeadModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+      <div class="bg-white w-full max-w-xl rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[90vh]">
+        <div class="p-5 bg-[#051C2C] text-white flex items-center justify-between">
+          <h3 class="text-base font-bold text-white flex items-center gap-2">
+            <i data-lucide="user-plus" class="w-5 h-5 text-sky-400"></i>
+            <span>現場手動建檔客戶名片 (當前展會: {{ currentExhibition.code }})</span>
+          </h3>
+          <button @click="showNewLeadModal = false" class="text-slate-400 hover:text-white">
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </div>
+
+        <div class="p-6 overflow-y-auto space-y-3.5 text-xs">
+          <div class="grid grid-cols-2 gap-3.5">
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">公司名稱 *</label>
+              <input v-model="newLeadForm.company" type="text" placeholder="例如：新穎精密工業" class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:border-blue-500">
+            </div>
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">聯絡人姓名 *</label>
+              <input v-model="newLeadForm.name" type="text" placeholder="例如：王大明" class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:border-blue-500">
+            </div>
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">部門 / 職稱</label>
+              <input v-model="newLeadForm.title" type="text" placeholder="業務經理 / 廠務總監" class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:border-blue-500">
+            </div>
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">分類</label>
+              <select v-model="newLeadForm.category" class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:outline-none">
+                <option value="光電">光電</option>
+                <option value="儲能">儲能</option>
+                <option value="參展廠商">參展廠商</option>
+                <option value="其他">其他</option>
+              </select>
+            </div>
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">行動電話</label>
+              <input v-model="newLeadForm.mobile" type="text" placeholder="0912-345-678" class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:outline-none">
+            </div>
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">電子郵件 (E-mail)</label>
+              <input v-model="newLeadForm.email" type="text" placeholder="service@example.com" class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:outline-none">
+            </div>
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">負責業務</label>
+              <select v-model="newLeadForm.sales_rep" class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:outline-none">
+                <option value="Jane">Jane</option>
+                <option value="Vanessa">Vanessa</option>
+                <option value="Lucy">Lucy</option>
+                <option value="Duck">Duck</option>
+                <option value="待指派">待指派</option>
+              </select>
+            </div>
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">初始機會階段</label>
+              <select v-model="newLeadForm.stage" class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:outline-none">
+                <option v-for="s in opportunityStages" :key="s.id" :value="s.name">{{ s.name }}</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">廠房地址</label>
+            <input v-model="newLeadForm.address" type="text" placeholder="地址" class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:outline-none">
+          </div>
+
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">洽談備註與需求要點</label>
+            <textarea v-model="newLeadForm.notes" rows="2" placeholder="紀錄訪客現場洽談重點..." class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:outline-none"></textarea>
+          </div>
+        </div>
+
+        <div class="p-4 bg-slate-50 border-t border-slate-200 flex justify-end gap-2">
+          <button @click="showNewLeadModal = false" class="px-4 py-2 rounded-lg bg-white border border-slate-300 text-slate-700 hover:bg-slate-100">取消</button>
+          <button @click="createNewLead" class="px-4 py-2 rounded-lg bg-[#005A9C] hover:bg-blue-700 text-white font-bold">建立名片</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- 模態視窗 3：建立新展會 (New Exhibition Modal - 擴充架構)          -->
+    <!-- ============================================================== -->
+    <div v-if="showNewExhibitionModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+      <div class="bg-white w-full max-w-lg rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col">
+        <div class="p-5 bg-[#051C2C] text-white flex items-center justify-between">
+          <h3 class="text-base font-bold text-white flex items-center gap-2">
+            <i data-lucide="calendar-plus" class="w-5 h-5 text-sky-400"></i>
+            <span>擴充建立新展會資料庫</span>
+          </h3>
+          <button @click="showNewExhibitionModal = false" class="text-slate-400 hover:text-white">
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </div>
+
+        <div class="p-6 space-y-3.5 text-xs">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">展會代碼 * (例如：2026-ENERGY-TW)</label>
+            <input v-model="newExhibitionForm.code" type="text" placeholder="2026-ENERGY-TW" class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:outline-none">
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">展會全名 *</label>
+            <input v-model="newExhibitionForm.name" type="text" placeholder="例如：2026 台灣國際智慧能源週" class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:outline-none">
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">展覽日期</label>
+              <input v-model="newExhibitionForm.date_range" type="text" placeholder="2026/10/14 - 10/16" class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:outline-none">
+            </div>
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">展覽地點</label>
+              <input v-model="newExhibitionForm.venue" type="text" placeholder="南港展覽館 1 館" class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:outline-none">
+            </div>
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">展出主題與主力產品</label>
+            <input v-model="newExhibitionForm.theme" type="text" placeholder="工商業儲能、微電網、用電大戶光電" class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:outline-none">
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">備註說明</label>
+            <textarea v-model="newExhibitionForm.description" rows="2" class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:outline-none"></textarea>
+          </div>
+        </div>
+
+        <div class="p-4 bg-slate-50 border-t border-slate-200 flex justify-end gap-2">
+          <button @click="showNewExhibitionModal = false" class="px-4 py-2 rounded-lg bg-white border border-slate-300 text-slate-700 hover:bg-slate-100">取消</button>
+          <button @click="createNewExhibition" class="px-4 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-bold">建立展會</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- 模態視窗 4：現場問卷填答表單 (Customer Survey Modal)            -->
+    <!-- ============================================================== -->
+    <div v-if="showSurveyFormModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+      <div class="bg-white w-full max-w-xl rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[92vh]">
+        <div class="p-5 bg-gradient-to-r from-[#051C2C] to-purple-900 text-white flex items-center justify-between">
+          <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-lg bg-purple-600 flex items-center justify-center text-white">
+              <i data-lucide="clipboard-check" class="w-4 h-4"></i>
+            </div>
+            <div>
+              <h3 class="text-base font-bold text-white">現場訪客需求調研問卷</h3>
+              <p class="text-xs text-purple-200">進金生能源 6692 · 現場 30 秒評估</p>
+            </div>
+          </div>
+          <button @click="showSurveyFormModal = false" class="text-slate-400 hover:text-white">
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </div>
+
+        <div v-if="!surveySuccess" class="p-6 overflow-y-auto space-y-4 text-xs">
+          <div class="bg-purple-50 p-3 rounded-xl border border-purple-200 text-purple-900 leading-relaxed">
+            感謝您蒞臨進金生能源展位！請花費 30 秒填妥以下需求，我們將提供您專屬的工商業光電/儲能技術經濟效益評估報告。
+          </div>
+
+          <div class="grid grid-cols-2 gap-3.5">
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">您的姓名 *</label>
+              <input v-model="surveyForm.name" type="text" placeholder="姓名" class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:border-purple-500">
+            </div>
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">公司 / 機構名稱 *</label>
+              <input v-model="surveyForm.company" type="text" placeholder="公司名稱" class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:border-purple-500">
+            </div>
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">聯絡電話 / 手機 *</label>
+              <input v-model="surveyForm.phone" type="text" placeholder="手機或市話" class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:border-purple-500">
+            </div>
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">電子郵件 (E-mail)</label>
+              <input v-model="surveyForm.email" type="text" placeholder="email@example.com" class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:border-purple-500">
+            </div>
+          </div>
+
+          <!-- 對於能源的需求 -->
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1.5">對於能源的需求 (可複選)</label>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <label v-for="d in ['企業_儲能系統(表後儲能、削峰填谷)', '居家_家用型儲能系統', '光電系統(自用、出租、出售)', '新知_想先了解再生能源最新趨勢']" :key="d"
+                     class="flex items-center gap-2 p-2 rounded-lg border hover:bg-slate-50 cursor-pointer text-slate-700"
+                     :class="surveyForm.energyDemands.includes(d) ? 'border-purple-500 bg-purple-50/40 font-semibold' : 'border-slate-200'">
+                <input type="checkbox" :value="d" v-model="surveyForm.energyDemands" class="rounded text-purple-600">
+                <span>{{ d }}</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- 建物類型與面積 -->
+          <div class="grid grid-cols-2 gap-3.5">
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">建物類型</label>
+              <select v-model="surveyForm.building_type" class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:outline-none">
+                <option value="自有廠房">自有廠房</option>
+                <option value="承租廠房">承租廠房</option>
+                <option value="住宅/透天/大樓">住宅 / 透天 / 社區大樓</option>
+                <option value="空地/土地">空地 / 土地</option>
+                <option value="其他">其他</option>
+              </select>
+            </div>
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">預估建置面積</label>
+              <select v-model="surveyForm.building_area" class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:outline-none">
+                <option value="100 坪以下">100 坪以下</option>
+                <option value="100~500 坪">100 ~ 500 坪</option>
+                <option value="501~1,000 坪">501 ~ 1,000 坪</option>
+                <option value="1,001 坪以上">1,001 坪以上</option>
+                <option value="尚不清楚">尚不清楚</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- 最在意的評估重點 -->
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1.5">關於再生能源，您最在意什麼？(可複選)</label>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <label v-for="c in ['建置成本與投資報酬率', '結構安全、防水防颱與後續保固', '防火標準與場地規範(儲能方面)', '達成法規、供應鏈綠電占比、ESG要求']" :key="c"
+                     class="flex items-center gap-2 p-2 rounded-lg border hover:bg-slate-50 cursor-pointer text-slate-700"
+                     :class="surveyForm.concerns.includes(c) ? 'border-purple-500 bg-purple-50/40 font-semibold' : 'border-slate-200'">
+                <input type="checkbox" :value="c" v-model="surveyForm.concerns" class="rounded text-purple-600">
+                <span>{{ c }}</span>
+              </label>
+            </div>
+          </div>
+
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">其他補充說明或疑問</label>
+            <textarea v-model="surveyForm.notes" rows="2" placeholder="例如：每月電費約30萬、詢問台電穩壓方案..." class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:outline-none"></textarea>
+          </div>
+        </div>
+
+        <!-- 提交成功畫面 -->
+        <div v-if="surveySuccess" class="p-10 flex flex-col items-center justify-center text-center space-y-3">
+          <div class="w-14 h-14 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center">
+            <i data-lucide="check" class="w-8 h-8"></i>
+          </div>
+          <h4 class="text-lg font-bold text-slate-900">問卷已成功送達！</h4>
+          <p class="text-xs text-slate-500 max-w-sm">
+            感謝您的填答！資料已即時寫入進金生能源 CRM 雲端系統，我們的專業能源工程師將盡速為您出具專屬評估報告。
+          </p>
+        </div>
+
+        <div v-if="!surveySuccess" class="p-4 bg-slate-50 border-t border-slate-200 flex justify-end gap-2">
+          <button @click="showSurveyFormModal = false" class="px-4 py-2 rounded-lg bg-white border border-slate-300 text-slate-700 hover:bg-slate-100">取消</button>
+          <button @click="submitSurveyForm" :disabled="surveySubmitting" class="px-5 py-2 rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold shadow flex items-center gap-1.5 disabled:opacity-50">
+            <i v-if="surveySubmitting" data-lucide="loader" class="w-4 h-4 animate-spin"></i>
+            <span>{{ surveySubmitting ? '送出中...' : '提交問卷' }}</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- 模態視窗 5：Supabase 雲端設定與同步 (Supabase Modal)             -->
+    <!-- ============================================================== -->
+    <div v-if="showSupabaseModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+      <div class="bg-white w-full max-w-xl rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col">
+        <div class="p-5 bg-[#051C2C] text-white flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <div class="w-3 h-3 rounded-full" :class="isSupabaseConnected ? 'bg-emerald-400' : 'bg-amber-400'"></div>
+            <h3 class="text-base font-bold text-white">Supabase 雲端資料庫整合配置</h3>
+          </div>
+          <button @click="showSupabaseModal = false" class="text-slate-400 hover:text-white">
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </div>
+
+        <div class="p-6 space-y-4 text-xs">
+          <div class="p-3.5 rounded-xl border flex items-center justify-between"
+               :class="isSupabaseConnected ? 'bg-emerald-50 border-emerald-200 text-emerald-900' : 'bg-amber-50 border-amber-200 text-amber-900'">
+            <div class="flex items-center gap-2">
+              <i :data-lucide="isSupabaseConnected ? 'check-circle' : 'alert-circle'" class="w-4 h-4"></i>
+              <span class="font-bold">{{ isSupabaseConnected ? (isTableReady ? 'PostgreSQL 資料表已連線就緒' : '雲端已連通 (請執行 SQL 腳本)') : '離線模式 (正使用本地種子資料庫)' }}</span>
+            </div>
+            <span class="text-[10px] bg-white px-2 py-0.5 rounded border border-slate-200 font-mono font-semibold">
+              {{ isSupabaseConnected ? 'ONLINE' : 'LOCAL CACHED' }}
+            </span>
+          </div>
+
+          <div class="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
+            <div>
+              <label class="block text-[11px] font-semibold text-slate-700 mb-1">Supabase Project URL</label>
+              <input v-model="supabaseUrl" type="text" class="w-full px-3 py-2 rounded-lg bg-white border border-slate-300 text-xs font-mono focus:outline-none focus:border-blue-500">
+            </div>
+
+            <div>
+              <label class="block text-[11px] font-semibold text-slate-700 mb-1">Supabase Anon Public Key (公開端客戶金鑰)</label>
+              <textarea v-model="supabaseKey" rows="2" class="w-full px-3 py-2 rounded-lg bg-white border border-slate-300 text-xs font-mono focus:outline-none focus:border-blue-500"></textarea>
+            </div>
+
+            <div class="flex items-center justify-between pt-1">
+              <button @click="testAndSaveSupabase" :disabled="supabaseTesting" class="px-3.5 py-2 rounded-lg bg-[#005A9C] hover:bg-blue-700 text-white font-semibold flex items-center gap-1.5 transition disabled:opacity-50">
+                <i data-lucide="refresh-cw" :class="{'animate-spin': supabaseTesting}" class="w-3.5 h-3.5"></i>
+                <span>儲存並測試連線</span>
+              </button>
+
+              <button @click="syncLocalToCloud" :disabled="!isSupabaseConnected || supabaseSyncing" class="px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold flex items-center gap-1.5 transition disabled:opacity-40">
+                <i data-lucide="cloud-upload" class="w-3.5 h-3.5"></i>
+                <span>一鍵同步種子資料至雲端</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- SQL 結構腳本提示 -->
+          <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="font-bold text-slate-800">PostgreSQL 資料表與 RLS 權限腳本</span>
+              <a href="https://supabase.com/dashboard/project/cowljafosekwvxithwjd/sql/new" target="_blank" class="text-blue-600 hover:underline flex items-center gap-1 text-[11px]">
+                開啟 SQL Editor <i data-lucide="external-link" class="w-3 h-3"></i>
+              </a>
+            </div>
+            <p class="text-[11px] text-slate-500">
+              若初次使用尚未建立 `exhibition_leads` 等資料表，可一鍵複製專案根目錄的 `supabase-schema.sql` 貼入 Supabase 執行：
+            </p>
+            <div class="flex items-center gap-2">
+              <input type="text" readonly value="supabase-schema.sql" class="flex-1 px-3 py-1.5 bg-white border border-slate-300 rounded text-slate-600 font-mono text-[11px]">
+              <button @click="copySqlSchema" class="px-3 py-1.5 rounded bg-slate-900 hover:bg-slate-800 text-white text-[11px] font-semibold transition">
+                {{ sqlCopied ? '已複製！' : '複製 SQL' }}
+              </button>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="p-4 bg-slate-50 border-t border-slate-200 flex justify-end">
+          <button @click="showSupabaseModal = false" class="px-4 py-2 rounded-lg bg-white hover:bg-slate-100 text-slate-700 text-xs font-semibold border border-slate-300">
+            關閉
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- 浮動 Toast 通知 (Floating Notification)                        -->
+    <!-- ============================================================== -->
+    <transition enter-active-class="transform ease-out duration-300 transition"
+                enter-from-class="translate-y-2 opacity-0 sm:translate-y-0 sm:translate-x-2"
+                enter-to-class="translate-y-0 opacity-100 sm:translate-x-0"
+                leave-active-class="transition ease-in duration-100"
+                leave-from-class="opacity-100"
+                leave-to-class="opacity-0">
+      <div v-if="notification.show" class="fixed bottom-5 right-5 z-50 flex items-center gap-2 px-4 py-3 rounded-xl shadow-xl text-xs font-semibold text-white"
+           :class="notification.type === 'error' ? 'bg-rose-600' : (notification.type === 'info' ? 'bg-blue-600' : 'bg-emerald-600')">
+        <i :data-lucide="notification.type === 'error' ? 'alert-triangle' : (notification.type === 'info' ? 'info' : 'check-circle-2')" class="w-4 h-4"></i>
+        <span>{{ notification.message }}</span>
+      </div>
+    </transition>
+
+  </div>
+
+  <!-- 載入前端業務腳本 -->
+  <script src="./static/seed-data.js"></script>
+  <script src="./static/app.js"></script>
+</body>
+</html>
